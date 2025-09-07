@@ -22,8 +22,7 @@
 
     <div class="max-w-4xl w-full flex flex-col items-center">
         <h1 class="text-5xl font-bold text-center text-gray-800 mb-2">Silly me!</h1>
-        <p class="text-xl text-center text-gray-600 mb-6">Let's go freaky.</p>
-        <div id="userIdDisplay" class="text-sm text-gray-500 mb-4 truncate w-full text-center hidden">User ID: ...</div>
+        <p class="text-xl text-center text-gray-600 mb-6">Random is the way to go :).</p>
 
         <!-- Main Content Area -->
         <div class="flex flex-col md:flex-row gap-8 w-full">
@@ -69,6 +68,7 @@
                         <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="pixel-art">Retro Pixel Art</button>
                         <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="ransom-note">Ransom Note</button>
                         <button id="randomButton" class="bg-blue-500 text-white p-4 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Random Style</button>
+                        <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-600 mt-2 p-2 rounded-xl bg-gray-100 hidden"></div>
                     </div>
                 </div>
             </div>
@@ -133,6 +133,7 @@
         const messageModal = document.getElementById('messageModal');
         const modalText = document.getElementById('modalText');
         const closeImageModalButton = document.getElementById('closeImageModalButton');
+        const randomPromptDisplay = document.getElementById('randomPromptDisplay');
 
         let originalImage = null;
         let currentImage = null;
@@ -165,6 +166,8 @@
                 const styleName = button.dataset.style;
                 const prompt = prompts[styleName];
                 if (prompt) {
+                    randomPromptDisplay.classList.add('hidden');
+                    randomPromptDisplay.textContent = '';
                     await generateImage(prompt);
                 }
             });
@@ -261,7 +264,7 @@
             }
 
             loadingOverlay.classList.remove('hidden');
-
+            
             try {
                 const response = await fetch('/api/generate-prompt');
                 if (!response.ok) {
@@ -270,6 +273,9 @@
                 const result = await response.json();
                 const randomPrompt = result.prompt;
                 
+                randomPromptDisplay.textContent = randomPrompt;
+                randomPromptDisplay.classList.remove('hidden');
+
                 await generateImage(randomPrompt);
                 
             } catch (error) {
