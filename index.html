@@ -8,296 +8,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        // Global variables
-        let currentPrompt = '';
-        let creationHistory = [];
-
-        const prompts = {
-            'crappy-sketch': 'a scan of a sketch made using a biro on lined paper, it is of a really bad drawn by someone who has never seen this person, bit strange, it\'s not very good, can\'t draw, doodle like, in blue ink on white A4 paper',
-            'chalk-doodle': 'A smudged portrait of a person crudely drawn with a stick of white chalk on a dusty, black chalkboard. The lines are not sharp, and some parts are partially erased or smudged, leaving behind a hazy, ghost-like residue. There are visible traces of chalk dust on the bottom.',
-            'toddler-painting': 'A simple and slightly lopsided portrait of a person\'s face, created with thick, uneven blobs of primary-colored paint. The colors are mixed messily in places, and the overall impression is one of a hurried, happy, and chaotic art project on a sheet of butcher paper.',
-            'bubblegum-sculpture': 'An abstract, lumpy, and slightly glistening portrait bust of a person. It is sculpted from bright pink chewed bubblegum, with some stretched, stringy pieces and a few stray crumbs stuck to it. The entire thing is stuck to a piece of faded cardboard.',
-            'macaroni-portrait': 'A portrait of a person constructed entirely from various shapes of dried macaroni and cheese noodles. The noodles are glued on unevenly, some are broken, and the overall form is a very poor representation of the person, glued on a brown piece of construction paper.',
-            'crumpled-napkin': 'A hurried, smudged, and dark sketch of a person\'s profile, drawn with a charcoal pencil on a flimsy, slightly off-white paper napkin. The sketch is barely visible through the creases of the napkin and a few coffee stains around the edges.',
-            'potato-print': 'A simple, stamp-like portrait of a person created by a series of unevenly inked potato prints. The lines are thick and chunky, and the stamp is applied slightly off-center and with varying pressure, leaving some parts of the print faded.',
-            'cross-stitch': 'A low-resolution, pixelated portrait of a person. The image is rendered as a cross-stitch on a piece of beige cloth, with slightly wobbly, uneven stitches. A few loose threads can be seen near the edges, and the whole design is a bit off-center.',
-            'ransom-note': 'A portrait of a person where their face and features are made up of cut-out pictures from different magazines. Their eyes, nose, and mouth are all from different people, glued haphazardly onto a piece of cardboard with visible glue residue on the edges.',
-        };
-
-        const canvas = document.getElementById('imageCanvas');
-        const ctx = canvas.getContext('2d');
-        const fileInput = document.getElementById('fileInput');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const downloadButton = document.getElementById('downloadButton');
-        const randomButton = document.getElementById('randomButton');
-        const historyContainer = document.getElementById('historyContainer');
-        const imageModal = document.getElementById('imageModal');
-        const enlargedImage = document.getElementById('enlargedImage');
-        const closeImageModalButton = document.getElementById('closeImageModalButton');
-        
-        let currentImage = null;
-        let originalImage = null;
-
-        // --- File Input and Canvas Setup ---
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const aspectRatio = img.width / img.height;
-                        canvas.width = 512;
-                        canvas.height = 512 / aspectRatio;
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        originalImage = canvas.toDataURL('image/png');
-                        currentImage = originalImage;
-                        enableButtons(true);
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // --- API Call and Image Generation ---
-        async function generateImage(prompt) {
-            if (!originalImage) {
-                showMessage("Please upload an image first.");
-                return;
-            }
-            
-            const img = new Image();
-            img.onload = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                loadingOverlay.classList.remove('hidden');
-                enableButtons(false);
-            };
-            img.src = originalImage;
-            
-            const base64ImageData = originalImage.split(',')[1];
-            
-            const serverUrl = "/api/generate-image";
-
-            const payload = {
-                prompt: prompt,
-                imageData: base64ImageData
-            };
-
-            let response;
-            let retries = 0;
-            const maxRetries = 5;
-            const initialDelay = 1000;
-
-            while (retries < maxRetries) {
-                try {
-                    response = await fetch(serverUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (response.status === 429) {
-                        retries++;
-                        const delay = initialDelay * Math.pow(2, retries - 1);
-                        await new Promise(res => setTimeout(res, delay));
-                        continue;
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`Server error: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    const base64Data = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-                    if (!base64Data) {
-                        throw new Error("No image data received from API.");
-                    }
-                    
-                    const newImage = new Image();
-                    newImage.onload = () => {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        const aspectRatio = newImage.width / newImage.height;
-                        canvas.width = 512;
-                        canvas.height = 512 / aspectRatio;
-                        ctx.drawImage(newImage, 0, 0, canvas.width, canvas.height);
-                        currentImage = canvas.toDataURL('image/png');
-                        
-                        creationHistory.push({
-                            id: Date.now(),
-                            image: currentImage,
-                            prompt: prompt
-                        });
-                        renderHistory();
-
-                        loadingOverlay.classList.add('hidden');
-                        enableButtons(true);
-                    };
-                    newImage.src = `data:image/png;base64,${base64Data}`;
-                    return;
-
-                } catch (error) {
-                    console.error("Error generating image:", error);
-                    retries++;
-                    const delay = initialDelay * Math.pow(2, retries - 1);
-                    await new Promise(res => setTimeout(res, delay));
-                }
-            }
-
-            loadingOverlay.classList.add('hidden');
-            enableButtons(true);
-            showMessage("Failed to generate image after multiple retries. Please try again later.");
+    <style>
+        /* This is the fix for mobile saving */
+        #imageCanvas {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
-        
-        // --- API call for prompt generation ---
-        async function generateRandomPrompt() {
-            if (!originalImage) {
-                showMessage("Please upload an image first.");
-                return;
-            }
-
-            randomButton.disabled = true;
-            randomButton.textContent = 'Generating Prompt...';
-            
-            const serverUrl = "/api/generate-prompt";
-            
-            const userQuery = "Create a new weird and silly style prompt.";
-
-            const payload = { userQuery };
-
-            let response;
-            let retries = 0;
-            const maxRetries = 5;
-            const initialDelay = 1000;
-
-            while (retries < maxRetries) {
-                try {
-                    response = await fetch(serverUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (response.status === 429) {
-                        retries++;
-                        const delay = initialDelay * Math.pow(2, retries - 1);
-                        await new Promise(res => setTimeout(res, delay));
-                        continue;
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`Server error: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    const newPrompt = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                    if (!newPrompt) {
-                        throw new Error("No prompt received from API.");
-                    }
-                    
-                    randomButton.textContent = 'Random Style';
-                    generateImage(newPrompt);
-                    return;
-
-                } catch (error) {
-                    console.error("Error generating random prompt:", error);
-                    retries++;
-                    const delay = initialDelay * Math.pow(2, retries - 1);
-                    await new Promise(res => setTimeout(res, delay));
-                }
-            }
-            randomButton.textContent = 'Random Style';
-            randomButton.disabled = false;
-            showMessage("Failed to generate a new prompt. Please try again later.");
-        }
-        
-        // --- History Rendering ---
-        function renderHistory() {
-            historyContainer.innerHTML = '';
-            creationHistory.forEach(item => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'w-24 h-24 overflow-hidden rounded-lg shadow-md cursor-pointer transition-transform hover:scale-105';
-                const img = document.createElement('img');
-                img.src = item.image;
-                img.alt = item.prompt;
-                img.className = 'w-full h-full object-cover';
-                
-                historyItem.addEventListener('click', () => {
-                    openImageModal(item.image);
-                });
-
-                historyItem.appendChild(img);
-                historyContainer.appendChild(historyItem);
-            });
-        }
-
-        // --- Modal Functionality ---
-        function openImageModal(src) {
-            enlargedImage.src = src;
-            imageModal.classList.remove('hidden');
-        }
-
-        closeImageModalButton.addEventListener('click', () => {
-            imageModal.classList.add('hidden');
-        });
-
-
-        // --- Button Event Listeners ---
-        document.querySelectorAll('.style-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const style = button.getAttribute('data-style');
-                generateImage(prompts[style]);
-            });
-        });
-
-        document.getElementById('randomButton').addEventListener('click', () => {
-            generateRandomPrompt();
-        });
-
-        // --- Utility Functions ---
-        function enableButtons(enabled) {
-            document.querySelectorAll('button').forEach(button => {
-                if (button.id !== 'fileInputLabel') {
-                    button.disabled = !enabled;
-                    button.classList.toggle('opacity-50', !enabled);
-                    button.classList.toggle('cursor-not-allowed', !enabled);
-                }
-            });
-            fileInput.disabled = !enabled;
-        }
-
-        downloadButton.addEventListener('click', () => {
-            if (!currentImage) {
-                showMessage("Please generate an image first.");
-                return;
-            }
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'styled_photo.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-
-        // --- Message Box Modal ---
-        const modal = document.getElementById('messageModal');
-        const modalText = document.getElementById('modalText');
-        const closeModalButton = document.getElementById('closeModalButton');
-
-        function showMessage(message) {
-            modalText.textContent = message;
-            modal.classList.remove('hidden');
-        }
-
-        closeModalButton.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-        
-    </script>
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-[Inter] flex flex-col items-center p-6 min-h-screen">
 
@@ -345,9 +64,9 @@
                         <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="toddler-painting">Toddler Painting</button>
                         <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="bubblegum-sculpture">Bubblegum Sculpture</button>
                         <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="macaroni-portrait">Macaroni Portrait</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="crumpled-napkin">Crumpled Napkin</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="potato-print">Potato Print</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="cross-stitch">Cross-Stitch</button>
+                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="stained-glass">Stained Glass Mosaic</button>
+                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="paint-collage">Textured Paint Collage</button>
+                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="pixel-art">Retro Pixel Art</button>
                         <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="ransom-note">Ransom Note</button>
                         <button id="randomButton" class="bg-blue-500 text-white p-4 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Random Style</button>
                     </div>
@@ -383,5 +102,208 @@
         </div>
     </div>
 
+    <script type="module">
+        // Global variables
+        let currentPrompt = '';
+        let creationHistory = [];
+
+        const prompts = {
+            'crappy-sketch': 'a scan of a sketch made using a biro on lined paper, it is of a really bad drawn by someone who has never seen this person, bit strange, it\'s not very good, can\'t draw, doodle like, in blue ink on white A4 paper',
+            'chalk-doodle': 'A smudged portrait of a person crudely drawn with a stick of white chalk on a dusty, black chalkboard. The lines are not sharp, and some parts are partially erased or smudged, leaving behind a hazy, ghost-like residue. There are visible traces of chalk dust on the bottom.',
+            'toddler-painting': 'A simple and slightly lopsided portrait of a person\'s face, created with thick, uneven blobs of primary-colored paint. The colors are mixed messily in places, and the overall impression is one of a hurried, happy, and chaotic art project on a sheet of butcher paper.',
+            'bubblegum-sculpture': 'An abstract, lumpy, and slightly glistening portrait bust of a person. It is sculpted from bright pink chewed bubblegum, with some stretched, stringy pieces and a few stray crumbs stuck to it. The entire thing is stuck to a piece of faded cardboard.',
+            'macaroni-portrait': 'A portrait of a person constructed entirely from various shapes of dried macaroni and cheese noodles. The noodles are glued on unevenly, some are broken, and the overall form is a very poor representation of the person, glued on a brown piece of construction paper.',
+            'stained-glass': 'A detailed portrait of a person as a mosaic of multicolored, translucent stained glass pieces joined by black leading lines. The image should be vibrant and have a shattered, yet beautiful effect.',
+            'paint-collage': 'A portrait of a person created as a collage of thick, textural paint strokes, torn magazine paper, and ink splatters. The style should be energetic, chaotic, and abstract, with a mix of different media.',
+            'pixel-art': 'A retro pixel art portrait of a person, using a very limited color palette and a lo-res, blocky aesthetic like a 1980s video game character.',
+            'ransom-note': 'A portrait of a person where their face and features are made up of cut-out pictures from different magazines. Their eyes, nose, and mouth are all from different people, glued haphazardly onto a piece of cardboard with visible glue residue on the edges.',
+        };
+
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const fileInput = document.getElementById('fileInput');
+        const fileInputLabel = document.getElementById('fileInputLabel');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const downloadButton = document.getElementById('downloadButton');
+        const randomButton = document.getElementById('randomButton');
+        const historyContainer = document.getElementById('historyContainer');
+        const imageModal = document.getElementById('imageModal');
+        const enlargedImage = document.getElementById('enlargedImage');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const messageModal = document.getElementById('messageModal');
+        const modalText = document.getElementById('modalText');
+        const closeImageModalButton = document.getElementById('closeImageModalButton');
+
+        let originalImage = null;
+        let currentImage = null;
+
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const aspectRatio = img.width / img.height;
+                        canvas.width = 512;
+                        canvas.height = 512 / aspectRatio;
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        originalImage = canvas.toDataURL('image/png');
+                        currentImage = originalImage;
+                        fileInputLabel.textContent = 'Change Photo';
+                        canvas.classList.remove('hidden');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.querySelectorAll('.style-button').forEach(button => {
+            button.addEventListener('click', async () => {
+                const styleName = button.dataset.style;
+                const prompt = prompts[styleName];
+                if (prompt) {
+                    await generateImage(prompt);
+                }
+            });
+        });
+
+        randomButton.addEventListener('click', async () => {
+            await generateRandomPromptAndImage();
+        });
+
+        downloadButton.addEventListener('click', () => {
+            if (!currentImage) {
+                showMessage("Please generate an image first.");
+                return;
+            }
+            const link = document.createElement('a');
+            link.href = currentImage;
+            link.download = 'silly-me-creation.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        closeImageModalButton.addEventListener('click', () => {
+            imageModal.classList.add('hidden');
+        });
+
+        closeModalButton.addEventListener('click', () => {
+            messageModal.classList.add('hidden');
+        });
+
+
+        // --- Functions ---
+        async function generateImage(prompt) {
+            if (!originalImage) {
+                showMessage("Please upload an image first.");
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const imageData = originalImage.split(',')[1];
+                
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, imageData }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || "Failed to generate image.");
+                }
+
+                const result = await response.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                if (!base64Data) {
+                    throw new Error("No image data received from API.");
+                }
+
+                const newImageUrl = `data:image/jpeg;base64,${base64Data}`;
+                
+                const img = new Image();
+                img.onload = () => {
+                    const aspectRatio = img.width / img.height;
+                    canvas.width = 512;
+                    canvas.height = 512 / aspectRatio;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    currentImage = newImageUrl;
+                    
+                    creationHistory.push({
+                        id: Date.now(),
+                        image: currentImage,
+                        prompt: prompt
+                    });
+                    renderHistory();
+                    downloadButton.classList.remove('hidden');
+                };
+                img.src = newImageUrl;
+                
+            } catch (error) {
+                console.error("Image generation failed:", error);
+                showMessage("Failed to generate image after multiple retries. Please try again later.");
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        async function generateRandomPromptAndImage() {
+            if (!originalImage) {
+                showMessage("Please upload an image first.");
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/generate-prompt');
+                if (!response.ok) {
+                    throw new Error("Failed to get a random prompt from the server.");
+                }
+                const result = await response.json();
+                const randomPrompt = result.prompt;
+                
+                await generateImage(randomPrompt);
+                
+            } catch (error) {
+                console.error("Random prompt generation failed:", error);
+                showMessage("Failed to generate a new prompt. Please try again later.");
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        function renderHistory() {
+            historyContainer.innerHTML = '';
+            creationHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.classList.add('w-24', 'h-24', 'overflow-hidden', 'rounded-lg', 'shadow-md', 'cursor-pointer', 'transition-transform', 'hover:scale-105');
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.alt = item.prompt;
+                img.classList.add('w-full', 'h-full', 'object-cover');
+                
+                historyItem.addEventListener('click', () => {
+                    enlargedImage.src = item.image;
+                    imageModal.classList.remove('hidden');
+                });
+
+                historyItem.appendChild(img);
+                historyContainer.appendChild(historyItem);
+            });
+        }
+        
+        function showMessage(message) {
+            modalText.textContent = message;
+            messageModal.classList.remove('hidden');
+        }
+        
+    </script>
 </body>
 </html>
