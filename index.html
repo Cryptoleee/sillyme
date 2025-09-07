@@ -216,7 +216,7 @@
             randomButton.disabled = true;
             randomButton.textContent = 'Generating Prompt...';
             
-            const apiKey = "";
+            const apiKey = "AIzaSyA3gcqQ9CEEjaLG02JLgWhbYFalfk0PIAs";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             
             const systemPrompt = "Generate a single, unique, bizarre, and silly style prompt for an image generation model to transform a portrait. The prompt should be a wild, creative combination of a subject and a material or theme. It should result in a restyling of the original photo, not a new creation. The prompts should sound like a mix of an art school critique and a fever dream. Examples include: 'a vibrant portrait of a person made entirely from a mosaic of melted gummy bears, dripping slightly onto a white surface,' or 'a hyper-realistic sculpture of a person's face carved from a single, giant block of swiss cheese, with holes and cracks revealing a starry night sky inside,' or 'a portrait of a person as if they were a mischievous monkey wearing a tiny suit, sketched on a napkin with a pen.' The output should be only the prompt string and nothing else.";
