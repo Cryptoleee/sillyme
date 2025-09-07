@@ -1,0 +1,12 @@
+{
+  "name": "silly-me-vercel",
+  "version": "1.0.0",
+  "description": "Silly Me! Vercel project.",
+  "main": "api/generate-image.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  }
+}
