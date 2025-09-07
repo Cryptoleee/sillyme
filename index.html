@@ -9,48 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        // Firebase imports - These are still present but not actively used for this version
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // Use a debug log level for development
-        setLogLevel('debug');
-
-        // Global variables for Firebase configuration
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db, auth, userId;
+        // Global variables
         let currentPrompt = '';
         let creationHistory = [];
-
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-
-        // This listener will ensure Firestore operations only happen after a user is authenticated.
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-            } else {
-                await signInAnonymously(auth);
-                userId = auth.currentUser.uid;
-            }
-            document.getElementById('userIdDisplay').textContent = `User ID: ${userId}`;
-        });
-
-        if (initialAuthToken) {
-            signInWithCustomToken(auth, initialAuthToken).catch((error) => {
-                console.error("Firebase custom auth token sign-in failed:", error);
-                signInAnonymously(auth).then(() => {
-                    userId = auth.currentUser.uid;
-                    document.getElementById('userIdDisplay').textContent = `User ID: ${userId}`;
-                }).catch((e) => console.error("Anonymous sign-in failed:", e));
-            });
-        }
 
         const prompts = {
             'crappy-sketch': 'a scan of a sketch made using a biro on lined paper, it is of a really bad drawn by someone who has never seen this person, bit strange, it\'s not very good, can\'t draw, doodle like, in blue ink on white A4 paper',
@@ -76,7 +37,7 @@
         const closeImageModalButton = document.getElementById('closeImageModalButton');
         
         let currentImage = null;
-        let originalImage = null; // Store the original image here
+        let originalImage = null;
 
         // --- File Input and Canvas Setup ---
         fileInput.addEventListener('change', (e) => {
@@ -90,7 +51,7 @@
                         canvas.width = 512;
                         canvas.height = 512 / aspectRatio;
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        originalImage = canvas.toDataURL('image/png'); // Save the original for future styling
+                        originalImage = canvas.toDataURL('image/png');
                         currentImage = originalImage;
                         enableButtons(true);
                     };
@@ -118,7 +79,6 @@
             
             const base64ImageData = originalImage.split(',')[1];
             
-            // Call the Vercel Serverless Function
             const serverUrl = "/api/generate-image";
 
             const payload = {
@@ -202,7 +162,6 @@
             randomButton.disabled = true;
             randomButton.textContent = 'Generating Prompt...';
             
-            // Call the Vercel Serverless Function
             const serverUrl = "/api/generate-prompt";
             
             const userQuery = "Create a new weird and silly style prompt.";
@@ -345,7 +304,7 @@
     <div class="max-w-4xl w-full flex flex-col items-center">
         <h1 class="text-5xl font-bold text-center text-gray-800 mb-2">Silly me!</h1>
         <p class="text-xl text-center text-gray-600 mb-6">Let's go freaky.</p>
-        <div id="userIdDisplay" class="text-sm text-gray-500 mb-4 truncate w-full text-center">User ID: ...</div>
+        <div id="userIdDisplay" class="text-sm text-gray-500 mb-4 truncate w-full text-center hidden">User ID: ...</div>
 
         <!-- Main Content Area -->
         <div class="flex flex-col md:flex-row gap-8 w-full">
