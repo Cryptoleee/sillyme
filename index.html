@@ -107,8 +107,6 @@
                 return;
             }
             
-            // This is the key fix: We redraw the original image on the canvas
-            // before generating the new one, providing visual feedback.
             const img = new Image();
             img.onload = () => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -118,11 +116,10 @@
             };
             img.src = originalImage;
             
-            // This is the main fix: we prepend a direct instruction to the prompt.
             const combinedPrompt = `Return a restyling of the provided image as: ${prompt}`;
-            currentPrompt = prompt;
-
+            
             const base64ImageData = originalImage.split(',')[1];
+            // You will need to replace this empty string with your Gemini API key
             const apiKey = "AIzaSyA3gcqQ9CEEjaLG02JLgWhbYFalfk0PIAs";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
 
@@ -183,11 +180,10 @@
                         ctx.drawImage(newImage, 0, 0, canvas.width, canvas.height);
                         currentImage = canvas.toDataURL('image/png');
                         
-                        // Add the new creation to history
                         creationHistory.push({
                             id: Date.now(),
                             image: currentImage,
-                            prompt: currentPrompt
+                            prompt: prompt
                         });
                         renderHistory();
 
@@ -217,14 +213,12 @@
                 return;
             }
 
-            // Show loading state for prompt generation
             randomButton.disabled = true;
             randomButton.textContent = 'Generating Prompt...';
             
             const apiKey = "";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             
-            // This is the updated system prompt with more creative examples.
             const systemPrompt = "Generate a single, unique, bizarre, and silly style prompt for an image generation model to transform a portrait. The prompt should be a wild, creative combination of a subject and a material or theme. It should result in a restyling of the original photo, not a new creation. The prompts should sound like a mix of an art school critique and a fever dream. Examples include: 'a vibrant portrait of a person made entirely from a mosaic of melted gummy bears, dripping slightly onto a white surface,' or 'a hyper-realistic sculpture of a person's face carved from a single, giant block of swiss cheese, with holes and cracks revealing a starry night sky inside,' or 'a portrait of a person as if they were a mischievous monkey wearing a tiny suit, sketched on a napkin with a pen.' The output should be only the prompt string and nothing else.";
             const userQuery = "Create a new weird and silly style prompt.";
 
@@ -266,7 +260,6 @@
                         throw new Error("No prompt received from API.");
                     }
                     
-                    // Once we have a new prompt, generate the image.
                     randomButton.textContent = 'Random Style';
                     generateImage(newPrompt);
                     return;
@@ -370,8 +363,8 @@
 <body class="bg-gray-50 text-gray-900 font-[Inter] flex flex-col items-center p-6 min-h-screen">
 
     <div class="max-w-4xl w-full flex flex-col items-center">
-        <h1 class="text-5xl font-bold text-center text-gray-800 mb-2">Silly Me!</h1>
-        <p class="text-xl text-center text-gray-600 mb-6">Apply fun styles to your photo :) </p>
+        <h1 class="text-5xl font-bold text-center text-gray-800 mb-2">Silly me!</h1>
+        <p class="text-xl text-center text-gray-600 mb-6">Let's go freaky.</p>
         <div id="userIdDisplay" class="text-sm text-gray-500 mb-4 truncate w-full text-center">User ID: ...</div>
 
         <!-- Main Content Area -->
