@@ -2,20 +2,23 @@ const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
     try {
-        const { prompt, imageData } = req.body;
-        const geminiApiKey = process.env.GEMINI_API_KEY; // Access the secure environment variable
-
+        const geminiApiKey = process.env.GEMINI_API_KEY;
         if (!geminiApiKey) {
             return res.status(500).json({ error: "API key is not set." });
         }
 
-        const combinedPrompt = `Return a restyling of the provided image as: ${prompt}`;
+        const { prompt, imageData } = req.body;
+        
+        if (!prompt || !imageData) {
+            return res.status(400).json({ error: "Missing prompt or image data." });
+        }
+        
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
 
         const payload = {
             contents: [{
                 parts: [
-                    { text: combinedPrompt },
+                    { text: `Return a restyling of the provided image as: ${prompt}` },
                     {
                         inlineData: {
                             mimeType: "image/png",
