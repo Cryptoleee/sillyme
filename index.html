@@ -48,8 +48,6 @@
  </head>
 <body class="text-gray-200 font-sans flex flex-col items-center p-6 min-h-screen" style="background-color: #1f2128;">
 
-    <canvas id="particleCanvas" class="fixed top-0 left-0 w-full h-full z-40 pointer-events-none"></canvas>
-
     <div class="max-w-4xl w-full flex flex-col items-center">
         <div class="text-center mb-8">
             <img src="GeminNice.png" alt="Silly Me Logo" class="mx-auto h-16 md:h-20">
@@ -80,7 +78,7 @@
 
                 <!-- Action Buttons -->
                  <div class="flex flex-col items-center gap-2 w-full">
-                    <p id="saveTip" class="text-lg text-gray-400 font-sans italic hidden">Press and hold to save the photo</p>
+                    <p id="saveTip" class="text-lg text-gray-400 italic hidden">Press and hold to save the photo</p>
                 </div>
             </div>
 
@@ -90,6 +88,7 @@
                     <h2 class="text-2xl font-bold mb-4 text-white">Choose a Style</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <button id="randomButton" class="btn-gradient text-white p-4 rounded-xl font-bold shadow-lg col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Surprise me!</button>
+                        <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-400 mt-2 p-2 rounded-xl bg-gray-700 hidden"></div>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="crappy-sketch">Crappy Sketch</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="chalk-doodle">Chalk Doodle</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="toddler-painting">Toddler Painting</button>
@@ -161,69 +160,12 @@
         const messageModal = document.getElementById('messageModal');
         const modalText = document.getElementById('modalText');
         const closeImageModalButton = document.getElementById('closeImageModalButton');
+        const randomPromptDisplay = document.getElementById('randomPromptDisplay');
         const styleButtons = document.querySelectorAll('.style-button');
         const saveTip = document.getElementById('saveTip');
 
         let originalImage = null;
         let currentImage = null;
-
-        // --- Particle Effect ---
-        const particleCanvas = document.getElementById('particleCanvas');
-        const ctx = particleCanvas.getContext('2d');
-        let particles = [];
-
-        function resizeCanvas() {
-            particleCanvas.width = window.innerWidth;
-            particleCanvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        
-        class Particle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 4;
-                this.vy = (Math.random() - 0.5) * 4 - 2;
-                this.life = 50; // Lifetime in frames
-                this.gravity = 0.08;
-            }
-
-            update() {
-                this.vy += this.gravity;
-                this.x += this.vx;
-                this.y += this.vy;
-                this.life--;
-            }
-
-            draw() {
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function createParticleBurst(x, y) {
-            for (let i = 0; i < 40; i++) {
-                particles.push(new Particle(x, y));
-            }
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.update();
-                p.draw();
-                if (p.life <= 0) {
-                    particles.splice(i, 1);
-                }
-            }
-            requestAnimationFrame(animateParticles);
-        }
-        animateParticles();
-
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', (e) => {
@@ -254,15 +196,15 @@
                 const styleName = button.dataset.style;
                 const prompt = prompts[styleName];
                 if (prompt) {
+                    randomPromptDisplay.classList.add('hidden');
+                    randomPromptDisplay.textContent = '';
                     await generateImage(prompt);
                 }
             });
         });
 
-        randomButton.addEventListener('click', async (e) => {
+        randomButton.addEventListener('click', async () => {
             styleButtons.forEach(btn => btn.classList.remove('active'));
-            const rect = e.target.getBoundingClientRect();
-            createParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
             await generateRandomPromptAndImage();
         });
 
@@ -329,7 +271,7 @@
                 
             } catch (error) {
                 console.error("Image generation failed:", error);
-                showMessage("Failed to generate image after multiple retries. Please try again later.");
+                showMessage(`Image generation failed: ${error.message}`);
             } finally {
                 loadingOverlay.classList.add('hidden');
             }
@@ -343,6 +285,7 @@
 
             loadingOverlay.classList.remove('hidden');
             saveTip.classList.add('hidden');
+
             // Scroll to the canvas on mobile so the user can see the generation
             if (window.innerWidth < 768) {
                 document.getElementById('imageDisplay').scrollIntoView({ behavior: 'smooth' });
@@ -357,11 +300,14 @@
                 const result = await response.json();
                 const randomPrompt = result.prompt;
                 
+                randomPromptDisplay.textContent = `Style: ${randomPrompt}`;
+                randomPromptDisplay.classList.remove('hidden');
+
                 await generateImage(randomPrompt);
                 
             } catch (error) {
                 console.error("Random prompt generation failed:", error);
-                showMessage("Failed to generate a new prompt. Please try again later.");
+                showMessage(`Failed to generate a new prompt: ${error.message}`);
                 loadingOverlay.classList.add('hidden');
             }
         }
