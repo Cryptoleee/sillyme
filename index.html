@@ -44,9 +44,19 @@
             box-shadow: 0 0 15px rgba(48, 168, 74, 0.5);
             color: white;
         }
+         #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
     </style>
  </head>
 <body class="text-gray-200 font-sans flex flex-col items-center p-6 min-h-screen" style="background-color: #1f2128;">
+    <canvas id="particle-canvas"></canvas>
 
     <div class="max-w-4xl w-full flex flex-col items-center">
         <div class="text-center mb-8">
@@ -88,7 +98,6 @@
                     <h2 class="text-2xl font-bold mb-4 text-white">Choose a Style</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <button id="randomButton" class="btn-gradient text-white p-4 rounded-xl font-bold shadow-lg col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Surprise me!</button>
-                        <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-400 mt-2 p-2 rounded-xl bg-gray-700 hidden"></div>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="crappy-sketch">Crappy Sketch</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="chalk-doodle">Chalk Doodle</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="toddler-painting">Toddler Painting</button>
@@ -160,12 +169,61 @@
         const messageModal = document.getElementById('messageModal');
         const modalText = document.getElementById('modalText');
         const closeImageModalButton = document.getElementById('closeImageModalButton');
-        const randomPromptDisplay = document.getElementById('randomPromptDisplay');
         const styleButtons = document.querySelectorAll('.style-button');
         const saveTip = document.getElementById('saveTip');
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
 
         let originalImage = null;
         let currentImage = null;
+        
+        // --- Particle Effect ---
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles(x, y) {
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    size: Math.random() * 2 + 1,
+                    alpha: 1
+                });
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.vx *= 0.99;
+                p.vy += 0.05; // Gravity
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            if (particles.length > 0) {
+                requestAnimationFrame(animateParticles);
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', (e) => {
@@ -196,15 +254,16 @@
                 const styleName = button.dataset.style;
                 const prompt = prompts[styleName];
                 if (prompt) {
-                    randomPromptDisplay.classList.add('hidden');
-                    randomPromptDisplay.textContent = '';
                     await generateImage(prompt);
                 }
             });
         });
 
-        randomButton.addEventListener('click', async () => {
+        randomButton.addEventListener('click', async (e) => {
             styleButtons.forEach(btn => btn.classList.remove('active'));
+            const rect = e.target.getBoundingClientRect();
+            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            animateParticles();
             await generateRandomPromptAndImage();
         });
 
@@ -300,9 +359,6 @@
                 const result = await response.json();
                 const randomPrompt = result.prompt;
                 
-                randomPromptDisplay.textContent = `Style: ${randomPrompt}`;
-                randomPromptDisplay.classList.remove('hidden');
-
                 await generateImage(randomPrompt);
                 
             } catch (error) {
@@ -340,5 +396,4 @@
     </script>
 </body>
 </html>
-
 
