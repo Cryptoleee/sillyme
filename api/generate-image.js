@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        const result = await response.json();
+        const result = await apiResponse.json();
 
         // Check for safety blocks or other reasons for an empty response
         if (!result.candidates || result.candidates.length === 0) {
