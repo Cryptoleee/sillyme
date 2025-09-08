@@ -40,10 +40,29 @@ module.exports = async (req, res) => {
 
         if (!apiResponse.ok) {
             const errorText = await apiResponse.text();
-            throw new Error(`API error: ${apiResponse.status} - ${errorText}`);
+            try {
+                // Try to parse the error for a more specific message from the API
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.error && errorJson.error.message) {
+                    throw new Error(errorJson.error.message);
+                }
+            } catch (e) {
+                 // If parsing fails, use the raw text
+                throw new Error(`API error: ${apiResponse.status} - ${errorText}`);
+            }
         }
 
-        const result = await apiResponse.json();
+        const result = await response.json();
+
+        // Check for safety blocks or other reasons for an empty response
+        if (!result.candidates || result.candidates.length === 0) {
+            if (result.promptFeedback && result.promptFeedback.blockReason) {
+                return res.status(400).json({ error: `Image generation blocked. Reason: ${result.promptFeedback.blockReason}` });
+            } else {
+                return res.status(500).json({ error: "No image data received from API, and no block reason was provided." });
+            }
+        }
+
         res.json(result);
 
     } catch (error) {
