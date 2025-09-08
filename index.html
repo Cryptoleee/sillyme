@@ -48,7 +48,7 @@
  </head>
 <body class="text-gray-200 font-sans flex flex-col items-center p-6 min-h-screen" style="background-color: #1f2128;">
 
-    <canvas id="particleCanvas" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
+    <canvas id="particleCanvas" class="fixed top-0 left-0 w-full h-full z-40 pointer-events-none"></canvas>
 
     <div class="max-w-4xl w-full flex flex-col items-center">
         <div class="text-center mb-8">
@@ -185,7 +185,7 @@
                 this.y = y;
                 this.vx = (Math.random() - 0.5) * 4;
                 this.vy = (Math.random() - 0.5) * 4 - 2;
-                this.alpha = 1;
+                this.life = 50; // Lifetime in frames
                 this.gravity = 0.08;
             }
 
@@ -193,11 +193,10 @@
                 this.vy += this.gravity;
                 this.x += this.vx;
                 this.y += this.vy;
-                this.alpha -= 0.02;
+                this.life--;
             }
 
             draw() {
-                ctx.globalAlpha = Math.max(0, this.alpha);
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
@@ -217,7 +216,7 @@
                 const p = particles[i];
                 p.update();
                 p.draw();
-                if (p.alpha <= 0) {
+                if (p.life <= 0) {
                     particles.splice(i, 1);
                 }
             }
@@ -395,4 +394,5 @@
     </script>
 </body>
 </html>
+
 
