@@ -1,91 +1,70 @@
-const fetch = require('node-fetch');
+const { GEMINI_API_KEY } = process.env;
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
 
-module.exports = async (req, res) => {
-    try {
-        const geminiApiKey = process.env.GEMINI_API_KEY;
-        if (!geminiApiKey) {
-            return res.status(500).json({ error: "API key is not set." });
-        }
-
-        const { prompt, imageData, mimeType } = req.body;
-        
-        if (!prompt || !imageData || !mimeType) {
-            return res.status(400).json({ error: "Missing prompt, image data, or mime type." });
-        }
-        
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
-
-        const payload = {
-            contents: [{
-                parts: [
-                    { text: `Return a restyling of the provided image as: ${prompt}` },
-                    {
-                        inlineData: {
-                            mimeType: mimeType,
-                            data: imageData
-                        }
-                    }
-                ]
-            }],
-            generationConfig: {
-                responseModalities: ["IMAGE"],
-            },
-            safetySettings: [
-                {
-                    "category": "HARM_CATEGORY_HARASSMENT",
-                    "threshold": "BLOCK_NONE"
-                },
-                {
-                    "category": "HARM_CATEGORY_HATE_SPEECH",
-                    "threshold": "BLOCK_NONE"
-                },
-                {
-                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    "threshold": "BLOCK_NONE"
-                },
-                {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "threshold": "BLOCK_NONE"
-                }
-            ]
-        };
-
-        const apiResponse = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!apiResponse.ok) {
-            const errorText = await apiResponse.text();
-            try {
-                // Try to parse the error for a more specific message from the API
-                const errorJson = JSON.parse(errorText);
-                if (errorJson.error && errorJson.error.message) {
-                    throw new Error(errorJson.error.message);
-                }
-            } catch (e) {
-                 // If parsing fails, use the raw text
-                throw new Error(`API error: ${apiResponse.status} - ${errorText}`);
-            }
-        }
-
-        const result = await apiResponse.json();
-
-        // Check for safety blocks or other reasons for an empty response
-        if (!result.candidates || result.candidates.length === 0) {
-            if (result.promptFeedback && result.promptFeedback.blockReason) {
-                return res.status(400).json({ error: `Image generation blocked. Reason: ${result.promptFeedback.blockReason}` });
-            } else {
-                return res.status(500).json({ error: "No image data received from API, and no block reason was provided." });
-            }
-        }
-
-        res.json(result);
-
-    } catch (error) {
-        console.error("Error in serverless function:", error);
-        res.status(500).json({ error: error.message });
-    }
+const themes = {
+    'Cartoon': ['90s cartoon', 'Animaniacs', 'Dexter\'s Laboratory', 'X-Men: The Animated Series', 'Rugrats'],
+    'Anime': ['Naruto', 'One Piece', 'Dragon Ball Z', 'Akira', 'One Punch Man', 'Shin-chan'],
+    'Vintage Comic Style': ['Marvel comics', 'DC comic', 'Spider-man', 'Batman', 'Teenage Mutant Ninja Turtle comics'],
+    'Collectible Toy': ['LEGO minifigure', 'Funko Pop'],
+    'Art Style': ['Bauhaus', 'Baroque', 'Expressionism', 'Surrealism', '16 bit SNES pixel art', 'MS Dos art']
 };
 
+function getInspiration() {
+    const themeNames = Object.keys(themes);
+    const randomThemeName = themeNames[Math.floor(Math.random() * themeNames.length)];
+    const styles = themes[randomThemeName];
+    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+    return `A restyling in the style of: ${randomStyle}`;
+}
+
+export default async function handler(req, res) {
+    if (req.method !== 'GET') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    try {
+        const inspiration = getInspiration();
+
+        const payload = {
+            contents: [
+                {
+                    parts: [
+                        { text: `Based on the following inspiration: "${inspiration}", generate a concise and direct prompt to restyle a photo. The prompt must be a single sentence describing a tangible art style, medium, or object. Do not ask for text, grids, or multiple scenes. For example: 'Restyle the photo in the style of a 16-bit SNES pixel art character.'` }
+                    ]
+                }
+            ],
+            systemInstruction: {
+                parts: [
+                    { text: "You are an expert prompt generator for an AI image model. Your only task is to generate a single, concise image generation prompt. Absolutely no extra text, no conversation, no introductions like 'Here's a creative prompt:'. Only output the prompt itself. The output must be a single, direct instruction." }
+                ]
+            }
+        };
+
+        const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error("API Error Body:", errorBody);
+            throw new Error(`API call failed with status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const promptText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!promptText) {
+            throw new Error('No prompt text received from API.');
+        }
+
+        const cleanedPrompt = promptText.trim().replace(/^"|"$/g, '');
+
+        return res.status(200).json({ prompt: cleanedPrompt });
+
+    } catch (error) {
+        console.error("Failed to generate prompt:", error);
+        return res.status(500).json({ error: 'Failed to generate a new prompt. Please try again later.' });
+    }
+}
