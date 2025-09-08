@@ -59,15 +59,15 @@
             <!-- Photo Upload & Canvas Section -->
             <div class="flex flex-col items-center flex-1">
                 <div class="w-full rounded-xl shadow-lg p-6 mb-6 relative" style="background-color: #222630;">
-                    <input type="file" id="fileInput" accept="image/*" class="hidden">
                     <label for="fileInput" id="fileInputLabel" class="w-full cursor-pointer btn-gradient text-white py-3 px-6 rounded-xl text-center text-lg font-bold block mb-4">
                         Upload Photo
                     </label>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
                     
                     <div class="relative w-full">
                         <img id="imageDisplay" class="w-full h-auto rounded-xl shadow-md border border-gray-700 hidden" alt="Generated image">
                         <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-800 bg-opacity-80 flex items-center justify-center rounded-xl">
-                            <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-green-500" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
@@ -77,8 +77,8 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex flex-wrap justify-center gap-4 w-full">
-                    <button id="downloadButton" class="btn-gradient text-white font-bold py-3 px-6 rounded-xl w-full md:w-auto">Download</button>
+                 <div class="flex flex-col items-center gap-2 w-full">
+                    <p id="saveTip" class="text-lg text-gray-400 font-sans italic hidden">Press and hold to save the photo</p>
                 </div>
             </div>
 
@@ -87,6 +87,7 @@
                 <div class="rounded-xl shadow-lg p-6" style="background-color: #222630;">
                     <h2 class="text-2xl font-bold mb-4 text-white">Choose a Style</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <button id="randomButton" class="btn-gradient text-white p-4 rounded-xl font-bold shadow-lg col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Surprise me!</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="crappy-sketch">Crappy Sketch</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="chalk-doodle">Chalk Doodle</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="toddler-painting">Toddler Painting</button>
@@ -96,7 +97,6 @@
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="paint-collage">Paint Collage</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="figurine">Figurine</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="ransom-note">Ransom Note</button>
-                        <button id="randomButton" class="btn-gradient text-white p-4 rounded-xl font-bold shadow-lg col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Random Style</button>
                         <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-400 mt-2 p-2 rounded-xl bg-gray-700 hidden"></div>
                     </div>
                 </div>
@@ -152,7 +152,6 @@
         const fileInput = document.getElementById('fileInput');
         const fileInputLabel = document.getElementById('fileInputLabel');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const downloadButton = document.getElementById('downloadButton');
         const randomButton = document.getElementById('randomButton');
         const historyContainer = document.getElementById('historyContainer');
         const imageModal = document.getElementById('imageModal');
@@ -163,6 +162,7 @@
         const closeImageModalButton = document.getElementById('closeImageModalButton');
         const randomPromptDisplay = document.getElementById('randomPromptDisplay');
         const styleButtons = document.querySelectorAll('.style-button');
+        const saveTip = document.getElementById('saveTip');
 
         let originalImage = null;
         let currentImage = null;
@@ -205,19 +205,6 @@
         randomButton.addEventListener('click', async () => {
             styleButtons.forEach(btn => btn.classList.remove('active'));
             await generateRandomPromptAndImage();
-        });
-
-        downloadButton.addEventListener('click', () => {
-            if (!currentImage) {
-                showMessage("Please generate an image first.");
-                return;
-            }
-            const link = document.createElement('a');
-            link.href = currentImage;
-            link.download = 'silly-me-creation.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         });
 
         closeImageModalButton.addEventListener('click', () => {
@@ -278,7 +265,7 @@
                     prompt: prompt
                 });
                 renderHistory();
-                downloadButton.classList.remove('hidden');
+                saveTip.classList.remove('hidden');
                 
             } catch (error) {
                 console.error("Image generation failed:", error);
@@ -349,4 +336,5 @@
     </script>
 </body>
 </html>
+
 
