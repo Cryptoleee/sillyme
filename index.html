@@ -48,6 +48,8 @@
  </head>
 <body class="text-gray-200 font-sans flex flex-col items-center p-6 min-h-screen" style="background-color: #1f2128;">
 
+    <canvas id="particleCanvas" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
+
     <div class="max-w-4xl w-full flex flex-col items-center">
         <div class="text-center mb-8">
             <img src="GeminNice.png" alt="Silly Me Logo" class="mx-auto h-16 md:h-20">
@@ -67,7 +69,7 @@
                     <div class="relative w-full">
                         <img id="imageDisplay" class="w-full h-auto rounded-xl shadow-md border border-gray-700 hidden" alt="Generated image">
                         <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-800 bg-opacity-80 flex items-center justify-center rounded-xl">
-                            <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-green-500" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
@@ -97,7 +99,6 @@
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="paint-collage">Paint Collage</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="figurine">Figurine</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="ransom-note">Ransom Note</button>
-                        <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-400 mt-2 p-2 rounded-xl bg-gray-700 hidden"></div>
                     </div>
                 </div>
             </div>
@@ -160,12 +161,70 @@
         const messageModal = document.getElementById('messageModal');
         const modalText = document.getElementById('modalText');
         const closeImageModalButton = document.getElementById('closeImageModalButton');
-        const randomPromptDisplay = document.getElementById('randomPromptDisplay');
         const styleButtons = document.querySelectorAll('.style-button');
         const saveTip = document.getElementById('saveTip');
 
         let originalImage = null;
         let currentImage = null;
+
+        // --- Particle Effect ---
+        const particleCanvas = document.getElementById('particleCanvas');
+        const ctx = particleCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4 - 2;
+                this.alpha = 1;
+                this.gravity = 0.08;
+            }
+
+            update() {
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.02;
+            }
+
+            draw() {
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticleBurst(x, y) {
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', (e) => {
@@ -180,6 +239,7 @@
                         currentImage = originalImage;
                         fileInputLabel.textContent = 'Change Photo';
                         imageDisplay.classList.remove('hidden');
+                        saveTip.classList.add('hidden'); // Hide tip on new upload
                     };
                     img.src = event.target.result;
                 };
@@ -195,15 +255,15 @@
                 const styleName = button.dataset.style;
                 const prompt = prompts[styleName];
                 if (prompt) {
-                    randomPromptDisplay.classList.add('hidden');
-                    randomPromptDisplay.textContent = '';
                     await generateImage(prompt);
                 }
             });
         });
 
-        randomButton.addEventListener('click', async () => {
+        randomButton.addEventListener('click', async (e) => {
             styleButtons.forEach(btn => btn.classList.remove('active'));
+            const rect = e.target.getBoundingClientRect();
+            createParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
             await generateRandomPromptAndImage();
         });
 
@@ -232,6 +292,7 @@
 
             loadingOverlay.classList.remove('hidden');
             imageDisplay.src = originalImage;
+            saveTip.classList.add('hidden');
 
             try {
                 const imageData = originalImage.split(',')[1];
@@ -282,6 +343,7 @@
             }
 
             loadingOverlay.classList.remove('hidden');
+            saveTip.classList.add('hidden');
             // Scroll to the canvas on mobile so the user can see the generation
             if (window.innerWidth < 768) {
                 document.getElementById('imageDisplay').scrollIntoView({ behavior: 'smooth' });
@@ -296,9 +358,6 @@
                 const result = await response.json();
                 const randomPrompt = result.prompt;
                 
-                randomPromptDisplay.textContent = randomPrompt;
-                randomPromptDisplay.classList.remove('hidden');
-
                 await generateImage(randomPrompt);
                 
             } catch (error) {
@@ -336,5 +395,4 @@
     </script>
 </body>
 </html>
-
 
