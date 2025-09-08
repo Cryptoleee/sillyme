@@ -7,10 +7,10 @@ module.exports = async (req, res) => {
             return res.status(500).json({ error: "API key is not set." });
         }
 
-        const { prompt, imageData } = req.body;
+        const { prompt, imageData, mimeType } = req.body;
         
-        if (!prompt || !imageData) {
-            return res.status(400).json({ error: "Missing prompt or image data." });
+        if (!prompt || !imageData || !mimeType) {
+            return res.status(400).json({ error: "Missing prompt, image data, or mime type." });
         }
         
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
                     { text: `Return a restyling of the provided image as: ${prompt}` },
                     {
                         inlineData: {
-                            mimeType: "image/png",
+                            mimeType: mimeType,
                             data: imageData
                         }
                     }
@@ -51,3 +51,4 @@ module.exports = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
