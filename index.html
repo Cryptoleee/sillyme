@@ -141,10 +141,6 @@
     </div>
 
     <script type="module">
-        // --- IMPORTANT ---
-        // Add your Gemini API Key here
-        const GEMINI_API_KEY = "YOUR_API_KEY"; 
-        
         // Global variables
         let creationHistory = [];
 
@@ -289,9 +285,6 @@
             if (!originalImage) {
                 return showMessage("Please upload an image first.");
             }
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_API_KEY") {
-                return showMessage("Please add your Gemini API Key at the top of the script.");
-            }
 
             loadingOverlay.classList.remove('hidden');
             imageDisplay.src = originalImage;
@@ -299,34 +292,16 @@
 
             try {
                 const imageData = originalImage.split(',')[1];
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${GEMINI_API_KEY}`;
                 
-                const payload = {
-                    contents: [{
-                        parts: [
-                            { text: `Return a restyling of the provided image as: ${prompt}` },
-                            {
-                                inlineData: {
-                                    mimeType: "image/png",
-                                    data: imageData
-                                }
-                            }
-                        ]
-                    }],
-                    generationConfig: {
-                        responseModalities: ["IMAGE"],
-                    },
-                };
-
-                const response = await fetch(apiUrl, {
+                const response = await fetch('/api/generate-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ prompt, imageData }),
                 });
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error?.message || "Failed to generate image.");
+                    throw new Error(error.error || "Failed to generate image.");
                 }
 
                 const result = await response.json();
