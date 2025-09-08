@@ -11,7 +11,7 @@ export default async function handler(req, res) {
             contents: [
                 {
                     parts: [
-                        { text: 'Generate one single, very creative and unique image generation prompt. The prompt should be for restyling a photo of a person. It should describe a style based on creative (digital) art styles, realistic materials, type of food art.".' }
+                        { text: 'Generate one single, concise, creative, and unique image generation prompt. The prompt should be for restyling a photo of a person. Use inspiration from realistic materials, artistic styles, or collectible toys. The prompt should be detailed but not overly long. Do not use generic words like "portrait" or "image".' }
                     ]
                 }
             ]
