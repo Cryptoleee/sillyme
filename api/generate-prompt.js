@@ -54,17 +54,14 @@ const themes = {
     }
 };
 
-function getRandomPrompt() {
+function getInspiration() {
     const themeNames = Object.keys(themes);
     const randomThemeName = themeNames[Math.floor(Math.random() * themeNames.length)];
     const subStyles = themes[randomThemeName];
     const subStyleNames = Object.keys(subStyles);
     const randomSubStyleName = subStyleNames[Math.floor(Math.random() * subStyleNames.length)];
     const selectedStyle = subStyles[randomSubStyleName];
-
-    const promptText = `A photo restyled in the style of a ${randomThemeName}, with the specific aesthetic of ${randomSubStyleName} and influenced by ${selectedStyle.influence}. The style should be characterized by ${selectedStyle.elements}.`;
-    
-    return promptText;
+    return `Theme: ${randomThemeName}, Style: ${randomSubStyleName}, Influence: ${selectedStyle.influence}, Elements: ${selectedStyle.elements}.`;
 }
 
 export default async function handler(req, res) {
@@ -73,19 +70,19 @@ export default async function handler(req, res) {
     }
 
     try {
-        const prompt = getRandomPrompt();
+        const inspiration = getInspiration();
 
         const payload = {
             contents: [
                 {
                     parts: [
-                        { text: prompt }
+                        { text: `Generate a single, creative, and unique image generation prompt suitable for an AI image model. The prompt should be for restyling a photo. Use the following as inspiration but create something entirely new and surprising: "${inspiration}". The final prompt should be a single, concise instruction without any conversational text or explanations.` }
                     ]
                 }
             ],
             systemInstruction: {
                 parts: [
-                    {text: "You are a creative prompt generator. Your task is to generate a single, concise, and creative image generation prompt based on the user's request. Do not add any extra text, conversation, or introductory phrases like 'Here's a creative...'. Only output the prompt itself."}
+                    { text: "You are an expert prompt generator for an AI image model. Your only task is to generate a single, concise image generation prompt. Absolutely no extra text, no conversation, no introductions like 'Here's a creative prompt:'. Only output the prompt itself. The output must be a single, direct instruction." }
                 ]
             }
         };
@@ -97,6 +94,8 @@ export default async function handler(req, res) {
         });
 
         if (!response.ok) {
+            const errorBody = await response.text();
+            console.error("API Error Body:", errorBody);
             throw new Error(`API call failed with status: ${response.status}`);
         }
 
@@ -107,9 +106,13 @@ export default async function handler(req, res) {
             throw new Error('No prompt text received from API.');
         }
 
-        return res.status(200).json({ prompt: promptText.trim() });
+        const cleanedPrompt = promptText.trim().replace(/^"|"$/g, '');
+
+        return res.status(200).json({ prompt: cleanedPrompt });
+
     } catch (error) {
         console.error("Failed to generate prompt:", error);
         return res.status(500).json({ error: 'Failed to generate a new prompt. Please try again later.' });
     }
 }
+
