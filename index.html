@@ -101,12 +101,12 @@
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="crappy-sketch">Crappy Sketch</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="chalk-doodle">Chalk Doodle</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="toddler-painting">Toddler Painting</button>
-                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="bubblegum-sculpture">Bubblegum</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="bubblegum-sculpture">Lego Set</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="macaroni-portrait">Macaroni</button>
-                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="stained-glass">Stained Glass</button>
-                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="paint-collage">Paint Collage</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="stained-glass">Marble Statue</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="paint-collage">Hairdresser</button>
                         <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="figurine">Figurine</button>
-                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="ransom-note">Ransom Note</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="ransom-note">Comic Story</button>
                     </div>
                 </div>
             </div>
@@ -141,22 +141,25 @@
     </div>
 
     <script type="module">
+        // --- IMPORTANT ---
+        // Add your Gemini API Key here
+        const GEMINI_API_KEY = "YOUR_API_KEY"; 
+        
         // Global variables
-        let currentPrompt = '';
         let creationHistory = [];
 
         const prompts = {
             'crappy-sketch': 'a scan of a sketch made using a biro on lined paper, it is of a really bad drawn by someone who has never seen this person, bit strange, it\\\'s not very good, can\\\'t draw, doodle like, in blue ink on white A4 paper',
             'chalk-doodle': 'A smudged portrait of a person crudely drawn with a stick of white chalk on a dusty, black chalkboard. The lines are not sharp, and some parts are partially erased or smudged, leaving behind a hazy, ghost-like residue. There are visible traces of chalk dust on the bottom.',
             'toddler-painting': 'A simple and slightly lopsided portrait of a person\\\'s face, created with thick, uneven blobs of primary-colored paint. The colors are mixed messily in places, and the overall impression is one of a hurried, happy, and chaotic art project on a sheet of butcher paper.',
-            'bubblegum-sculpture': 'An abstract, lumpy, and slightly glistening portrait bust of a person. It is sculpted from bright pink chewed bubblegum, with some stretched, stringy pieces and a few stray crumbs stuck to it. The entire thing is stuck to a piece of faded cardboard.',
+            'bubblegum-sculpture': 'Transform the person in the photo into a LEGO minifigure packaging box style, presented in isometric perspective. Label the box with the title "It\'s me!". Inside the box, display the LEGO minifigure based on the person in the photo, along with their essential items (or items that are seen in the photo) as LEGO accessories. Beside the box, also display the actual LEGO minifigure itself, unpackaged, rendered in a realistic and vivid style.',
             'macaroni-portrait': 'A portrait of a person constructed entirely from various shapes of dried macaroni and cheese noodles. The noodles are glued on unevenly, some are broken, and the overall form is a very poor representation of the person, glued on a brown piece of construction paper.',
-            'stained-glass': 'A detailed portrait of a person as a mosaic of multicolored, translucent stained glass pieces joined by black leading lines. The image should be vibrant and have a shattered, yet beautiful effect.',
-            'paint-collage': 'A portrait of a person created as a collage of thick, textural paint strokes, torn magazine paper, and ink splatters. The style should be energetic, chaotic, and abstract, with a mix of different media.',
+            'stained-glass': 'A photorealistic image of an ultra-detailed sculpture of the subject in image made of marble. The sculpture should display smooth and reflective marble surface, emphasizing its luster and artistic craftsmanship. The design is elegant, highlighting the beauty and depth of marble. The lighting in the image should enhance the sculpture\'s contours and textures, creating a visually stunning and mesmerizing effect.',
+            'paint-collage': 'Generate avatars of this person with different hairstyles in a 3x3 grid format.',
             'figurine': 'Create a 1/7 scale commercialized figurine of the characters in the picture, in a realistic style, in a real environment. The figurine is placed on a computer desk. The figurine has a round transparent acrylic base, with no text on the base. The content on the computer screen is a 3D modeling process of this figurine. Next to the computer screen is a toy packaging box, designed in a style reminiscent of high-quality collectible figures, printed with original artwork. The packaging features two-dimensional flat illustrations.',
-            'ransom-note': 'A portrait of a person where their face and features are made up of cut-out pictures from different magazines. Their eyes, nose, and mouth are all from different people, glued haphazardly onto a piece of cardboard with visible glue residue on the edges.',
+            'ransom-note': 'make a comic book strip, add text, write a compelling story. I want a superhero comic book',
         };
-
+        
         const imageDisplay = document.getElementById('imageDisplay');
         const fileInput = document.getElementById('fileInput');
         const fileInputLabel = document.getElementById('fileInputLabel');
@@ -282,12 +285,12 @@
             }
         });
 
-
-        // --- Functions ---
         async function generateImage(prompt) {
             if (!originalImage) {
-                showMessage("Please upload an image first.");
-                return;
+                return showMessage("Please upload an image first.");
+            }
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_API_KEY") {
+                return showMessage("Please add your Gemini API Key at the top of the script.");
             }
 
             loadingOverlay.classList.remove('hidden');
@@ -296,16 +299,34 @@
 
             try {
                 const imageData = originalImage.split(',')[1];
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${GEMINI_API_KEY}`;
                 
-                const response = await fetch('/api/generate-image', {
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: `Return a restyling of the provided image as: ${prompt}` },
+                            {
+                                inlineData: {
+                                    mimeType: "image/png",
+                                    data: imageData
+                                }
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["IMAGE"],
+                    },
+                };
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, imageData }),
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error || "Failed to generate image.");
+                    throw new Error(error.error?.message || "Failed to generate image.");
                 }
 
                 const result = await response.json();
@@ -338,14 +359,12 @@
 
         async function generateRandomPromptAndImage() {
             if (!originalImage) {
-                showMessage("Please upload an image first.");
-                return;
+                return showMessage("Please upload an image first.");
             }
 
             loadingOverlay.classList.remove('hidden');
             saveTip.classList.add('hidden');
 
-            // Scroll to the canvas on mobile so the user can see the generation
             if (window.innerWidth < 768) {
                 document.getElementById('imageDisplay').scrollIntoView({ behavior: 'smooth' });
             }
@@ -354,8 +373,10 @@
             try {
                 const response = await fetch('/api/generate-prompt');
                 if (!response.ok) {
-                    throw new Error("Failed to get a random prompt from the server.");
+                     const errorBody = await response.json();
+                    throw new Error(errorBody.error || "Failed to get a random prompt from the server.");
                 }
+
                 const result = await response.json();
                 const randomPrompt = result.prompt;
                 
