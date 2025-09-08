@@ -11,7 +11,7 @@ export default async function handler(req, res) {
             contents: [
                 {
                     parts: [
-                        { text: 'Generate a creative and unique image generation prompt. The prompt must randomly combine one primary style with one unique, randomly created showcase element. Primary Styles: artistic, creative digital style; vintage comic book style; classic anime style; a 90s cartoon style; or a detailed designer toy style. The unique showcase element should be a descriptive phrase that explains how the image is presented, such as its environment, framing, or physical display. Do not repeat a previous element.' }
+                        { text: 'Generate a creative and unique image generation prompt. The prompt should be for restyling the photo. The prompt should use inspiration from either one of these themes: artistic creative (digital) style, vintage comic style, anime, cartoon, collectible (designer) toy. The prompt should be simple and pick a different theme each generation' }
                     ]
                 }
             ],
