@@ -3,33 +3,73 @@ const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-
 
 const themes = {
     'Cartoon': {
-        '80s/90s Cartoon': {
-            influence: 'the bold, blocky art style of cartoons like _He-Man and the Masters of the Universe_',
-            elements: 'vibrant, high-contrast colors and a heroic, fantastical feel'
+        '90s Cartoon': {
+            influence: 'the bold, blocky art style of 90s cartoons',
+            elements: 'vibrant, high-contrast colors and a fun, animated feel'
         },
-        'Hanna-Barbera style': {
-            influence: 'classic Hanna-Barbera cartoons like _The Flintstones_ or _Scooby-Doo_',
-            elements: 'simple, clean linework and a flat, limited color palette'
+        'Animaniacs': {
+            influence: 'the zany, high-energy animation of _Animaniacs_',
+            elements: 'exaggerated expressions, fast-paced motion, and a rubbery, flexible feel'
+        },
+        'Dexter\'s Laboratory': {
+            influence: 'the sharp, geometric character designs of _Dexter\'s Laboratory_',
+            elements: 'a clean, angular aesthetic with a retro-futuristic vibe'
+        },
+        'X-Men: The Animated Series': {
+            influence: 'the dramatic, action-packed style of _X-Men: The Animated Series_',
+            elements: 'heavy shadows, dynamic poses, and a comic book-inspired look'
+        },
+        'Rugrats': {
+            influence: 'the quirky, scribbly art style of _Rugrats_',
+            elements: 'wobbly lines, oddly proportioned characters, and a charmingly imperfect, hand-drawn quality'
         }
     },
     'Anime': {
+        'Naruto': {
+            influence: 'the dynamic action scenes and distinct character designs of _Naruto_',
+            elements: 'bold outlines, motion lines for speed, and vibrant chakra energy effects'
+        },
+        'One Piece': {
+            influence: 'the exaggerated, rubbery art style of Eiichiro Oda\'s _One Piece_',
+            elements: 'wildly imaginative character proportions, vibrant colors, and a sense of grand adventure'
+        },
+        'Dragon Ball Z': {
+            influence: 'the iconic, muscular character designs and explosive energy blasts of _Dragon Ball Z_',
+            elements: 'spiky hair, intense speed lines, and glowing auras'
+        },
         'Akira': {
             influence: 'the gritty, futuristic cyberpunk world of _Akira_',
             elements: 'dark, moody color palettes, a sense of kinetic motion, and intricate, mechanical details'
         },
-        'Studio Ghibli': {
-            influence: 'the soft, painterly aesthetic of Studio Ghibli films like _My Neighbor Totoro_',
-            elements: 'lush, hand-painted backgrounds and a warm, fantastical atmosphere'
+        'One Punch Man': {
+            influence: 'the clean, high-impact animation style of _One Punch Man_',
+            elements: 'incredibly detailed action sequences contrasted with a simple, comically understated main character'
+        },
+        'Shin-chan': {
+            influence: 'the simple, rounded, and childlike art style of _Crayon Shin-chan_',
+            elements: 'thick outlines, minimalist facial expressions, and a playful, lighthearted feel'
         }
     },
     'Vintage Comic Style': {
-        'Golden Age Comics': {
-            influence: 'the early _Spider-Man_ comics from the 1960s',
-            elements: 'bold, clean linework, a limited, vibrant color palette, and a sense of dynamic action'
+        'Marvel Comics': {
+            influence: 'the dynamic, heroic style of classic Marvel comics',
+            elements: 'Ben-Day dots for shading, bold ink lines, and dramatic action poses'
         },
-        'Noir style': {
-            influence: 'Frank Miller\'s _Sin City_ comics',
-            elements: 'high-contrast black and white, stark shadows, and a grim, gritty feel'
+        'DC Comics': {
+            influence: 'the darker, more realistic art style of modern DC comics',
+            elements: 'heavy use of shadow, detailed musculature, and a cinematic, gritty atmosphere'
+        },
+        'Spider-Man': {
+            influence: 'the acrobatic, web-slinging action from classic _Spider-Man_ comics',
+            elements: 'dynamic perspectives, flexible poses, and a cityscape background'
+        },
+        'Batman': {
+            influence: 'the dark, gothic atmosphere of _Batman_ comics',
+            elements: 'noir-style shadows, dramatic capes, and a moody, detective-story feel'
+        },
+        'Teenage Mutant Ninja Turtles Comics': {
+            influence: 'the raw, gritty style of the original Eastman and Laird comics',
+            elements: 'heavy cross-hatching, black-and-white art, and an underground, indie comic vibe'
         }
     },
     'Collectible Toy': {
@@ -43,13 +83,29 @@ const themes = {
         }
     },
     'Art Style': {
+        'Bauhaus': {
+            influence: 'the geometric shapes and functional design of the Bauhaus movement',
+            elements: 'clean lines, primary colors, and a focus on form and structure'
+        },
+        'Baroque': {
+            influence: 'the dramatic, ornate style of the Baroque period',
+            elements: 'rich colors, intense light and dark shadows, and a sense of grandeur and movement'
+        },
+        'Expressionism': {
+            influence: 'the distorted, emotional style of German Expressionism',
+            elements: 'swirling, exaggerated brushstrokes, intense colors, and a focus on subjective reality'
+        },
         'Surrealism': {
             influence: 'the dreamlike works of Salvador Dalí',
             elements: 'distorted, illogical imagery, melting objects, and a sense of the uncanny'
         },
-        'Pop Art': {
-            influence: 'the iconic style of Andy Warhol',
-            elements: 'bold colors, repeated imagery, and a flat, screen-printed appearance'
+        '16-bit SNES Pixel Art': {
+            influence: 'the pixelated graphics of a 16-bit Super Nintendo game',
+            elements: 'a limited color palette, blocky character sprites, and a nostalgic, retro video game feel'
+        },
+        'MS-DOS Art': {
+            influence: 'the low-resolution, dithering art style of old MS-DOS games',
+            elements: 'a very limited palette (like EGA or CGA), pixelated graphics, and a distinctly retro computer aesthetic'
         }
     }
 };
