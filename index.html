@@ -6,60 +6,98 @@
     <title>Silly Me</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              fontFamily: {
+                sans: ['Ubuntu', 'sans-serif'],
+              },
+            }
+          }
+        }
+    </script>
+    <style>
+        .btn-gradient {
+            background-image: linear-gradient(to right, #30a84a, #29ff5a);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(48, 168, 74, 0.4), 0 0 15px rgba(41, 255, 90, 0.3);
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 0 25px rgba(48, 168, 74, 0.7), 0 0 25px rgba(41, 255, 90, 0.5);
+            transform: scale(1.03);
+        }
+
+        .style-button {
+            background-color: #374151; /* bg-gray-700 */
+            transition: all 0.3s ease;
+        }
+        .style-button:hover {
+            background-color: #4B5563; /* bg-gray-600 */
+            box-shadow: 0 0 5px rgba(48, 168, 74, 0.2);
+            transform: scale(1.03);
+        }
+        .style-button.active {
+            background-image: linear-gradient(to right, #30a84a, #29ff5a);
+            box-shadow: 0 0 15px rgba(48, 168, 74, 0.5);
+            color: white;
+        }
+    </style>
  </head>
-<body class="bg-gray-50 text-gray-900 font-[Inter] flex flex-col items-center p-6 min-h-screen">
+<body class="text-gray-200 font-sans flex flex-col items-center p-6 min-h-screen" style="background-color: #1f2128;">
 
     <div class="max-w-4xl w-full flex flex-col items-center">
-        <h1 class="text-5xl font-bold text-center text-gray-800 mb-2">Silly me!</h1>
-        <p class="text-xl text-center text-gray-600 mb-6">Create something cool.</p>
+        <div class="text-center mb-8">
+            <img src="GeminNice.png" alt="Silly Me Logo" class="mx-auto h-16 md:h-20">
+        </div>
 
         <!-- Main Content Area -->
         <div class="flex flex-col md:flex-row gap-8 w-full">
             
             <!-- Photo Upload & Canvas Section -->
             <div class="flex flex-col items-center flex-1">
-                <div class="w-full bg-white rounded-xl shadow-lg p-6 mb-6 relative">
+                <div class="w-full rounded-xl shadow-lg p-6 mb-6 relative" style="background-color: #222630;">
                     <input type="file" id="fileInput" accept="image/*" class="hidden">
-                    <label for="fileInput" id="fileInputLabel" class="w-full cursor-pointer bg-blue-500 text-white py-3 px-6 rounded-xl text-center text-lg font-bold hover:bg-blue-600 transition-colors duration-200 block mb-4">
+                    <label for="fileInput" id="fileInputLabel" class="w-full cursor-pointer btn-gradient text-white py-3 px-6 rounded-xl text-center text-lg font-bold block mb-4">
                         Upload Photo
                     </label>
                     
                     <div class="relative w-full">
-                        <img id="imageDisplay" class="w-full h-auto rounded-xl shadow-md border border-gray-200 hidden" alt="Generated image">
-                        <div id="loadingOverlay" class="hidden absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-xl">
-                            <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <img id="imageDisplay" class="w-full h-auto rounded-xl shadow-md border border-gray-700 hidden" alt="Generated image">
+                        <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-800 bg-opacity-80 flex items-center justify-center rounded-xl">
+                            <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <span class="text-gray-700 text-lg">Generating...</span>
+                            <span class="text-gray-300 text-lg">Generating...</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap justify-center gap-4 w-full">
-                    <button id="downloadButton" class="bg-green-500 text-white font-bold py-3 px-6 rounded-xl transition-transform hover:scale-105 shadow-lg w-full md:w-auto">Download</button>
+                    <button id="downloadButton" class="btn-gradient text-white font-bold py-3 px-6 rounded-xl w-full md:w-auto">Download</button>
                 </div>
             </div>
 
             <!-- Style Buttons Section -->
             <div class="flex-1 w-full md:w-auto">
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Choose a Style</h2>
+                <div class="rounded-xl shadow-lg p-6" style="background-color: #222630;">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Choose a Style</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="crappy-sketch">Crappy Sketch</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="chalk-doodle">Chalk Doodle</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="toddler-painting">Toddler Painting</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="bubblegum-sculpture">Bubblegum Sculpture</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="macaroni-portrait">Macaroni Portrait</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="stained-glass">Stained Glass Mosaic</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="paint-collage">Textured Paint Collage</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="figurine">Figurine</button>
-                        <button class="style-button bg-gray-100 text-gray-800 p-4 rounded-xl font-bold shadow-sm transition-transform hover:scale-105" data-style="ransom-note">Ransom Note</button>
-                        <button id="randomButton" class="bg-blue-500 text-white p-4 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Random Style</button>
-                        <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-600 mt-2 p-2 rounded-xl bg-gray-100 hidden"></div>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="crappy-sketch">Crappy Sketch</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="chalk-doodle">Chalk Doodle</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="toddler-painting">Toddler Painting</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="bubblegum-sculpture">Bubblegum</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="macaroni-portrait">Macaroni</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="stained-glass">Stained Glass</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="paint-collage">Paint Collage</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="figurine">Figurine</button>
+                        <button class="style-button text-gray-200 p-4 rounded-xl font-bold shadow-sm" data-style="ransom-note">Ransom Note</button>
+                        <button id="randomButton" class="btn-gradient text-white p-4 rounded-xl font-bold shadow-lg col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3">Random Style</button>
+                        <div id="randomPromptDisplay" class="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 text-sm text-center text-gray-400 mt-2 p-2 rounded-xl bg-gray-700 hidden"></div>
                     </div>
                 </div>
             </div>
@@ -67,8 +105,8 @@
         
         <!-- History Section -->
         <div class="mt-8 w-full max-w-4xl">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800">Your Creations</h2>
+            <div class="rounded-xl shadow-lg p-6" style="background-color: #222630;">
+                <h2 class="text-2xl font-bold mb-4 text-white">Your Creations</h2>
                 <div id="historyContainer" class="flex flex-wrap gap-4 overflow-x-auto p-2">
                     <!-- History items will be rendered here -->
                 </div>
@@ -78,17 +116,17 @@
     </div>
     
     <!-- Message Box Modal -->
-    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl p-8 shadow-2xl max-w-sm w-full">
-            <p id="modalText" class="text-center text-lg font-medium text-gray-800 mb-6"></p>
-            <button id="closeModalButton" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl transition-colors hover:bg-blue-600">Got it</button>
+    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="rounded-xl p-8 shadow-2xl max-w-sm w-full border border-gray-700" style="background-color: #222630;">
+            <p id="modalText" class="text-center text-lg font-medium text-gray-200 mb-6"></p>
+            <button id="closeModalButton" class="w-full btn-gradient text-white font-bold py-3 rounded-xl">Got it</button>
         </div>
     </div>
     
     <!-- Image Display Modal -->
     <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="relative bg-white rounded-xl p-4 shadow-2xl max-w-lg max-h-[90%] w-full flex flex-col">
-            <button id="closeImageModalButton" class="absolute top-2 right-2 text-white bg-red-500 p-2 rounded-full font-bold font-bold text-lg leading-none w-8 h-8 flex items-center justify-center">×</button>
+        <div class="relative rounded-xl p-4 shadow-2xl max-w-lg max-h-[90%] w-full flex flex-col border border-gray-700" style="background-color: #222630;">
+            <button id="closeImageModalButton" class="absolute top-2 right-2 text-white bg-red-500 p-2 rounded-full font-bold text-lg leading-none w-8 h-8 flex items-center justify-center z-10">×</button>
             <img id="enlargedImage" src="" alt="Enlarged styled image" class="w-full h-auto object-contain rounded-xl">
         </div>
     </div>
@@ -99,9 +137,9 @@
         let creationHistory = [];
 
         const prompts = {
-            'crappy-sketch': 'a scan of a sketch made using a biro on lined paper, it is of a really bad drawn by someone who has never seen this person, bit strange, it\'s not very good, can\'t draw, doodle like, in blue ink on white A4 paper',
+            'crappy-sketch': 'a scan of a sketch made using a biro on lined paper, it is of a really bad drawn by someone who has never seen this person, bit strange, it\\\'s not very good, can\\\'t draw, doodle like, in blue ink on white A4 paper',
             'chalk-doodle': 'A smudged portrait of a person crudely drawn with a stick of white chalk on a dusty, black chalkboard. The lines are not sharp, and some parts are partially erased or smudged, leaving behind a hazy, ghost-like residue. There are visible traces of chalk dust on the bottom.',
-            'toddler-painting': 'A simple and slightly lopsided portrait of a person\'s face, created with thick, uneven blobs of primary-colored paint. The colors are mixed messily in places, and the overall impression is one of a hurried, happy, and chaotic art project on a sheet of butcher paper.',
+            'toddler-painting': 'A simple and slightly lopsided portrait of a person\\\'s face, created with thick, uneven blobs of primary-colored paint. The colors are mixed messily in places, and the overall impression is one of a hurried, happy, and chaotic art project on a sheet of butcher paper.',
             'bubblegum-sculpture': 'An abstract, lumpy, and slightly glistening portrait bust of a person. It is sculpted from bright pink chewed bubblegum, with some stretched, stringy pieces and a few stray crumbs stuck to it. The entire thing is stuck to a piece of faded cardboard.',
             'macaroni-portrait': 'A portrait of a person constructed entirely from various shapes of dried macaroni and cheese noodles. The noodles are glued on unevenly, some are broken, and the overall form is a very poor representation of the person, glued on a brown piece of construction paper.',
             'stained-glass': 'A detailed portrait of a person as a mosaic of multicolored, translucent stained glass pieces joined by black leading lines. The image should be vibrant and have a shattered, yet beautiful effect.',
@@ -124,6 +162,7 @@
         const modalText = document.getElementById('modalText');
         const closeImageModalButton = document.getElementById('closeImageModalButton');
         const randomPromptDisplay = document.getElementById('randomPromptDisplay');
+        const styleButtons = document.querySelectorAll('.style-button');
 
         let originalImage = null;
         let currentImage = null;
@@ -148,8 +187,11 @@
             }
         });
 
-        document.querySelectorAll('.style-button').forEach(button => {
+        styleButtons.forEach(button => {
             button.addEventListener('click', async () => {
+                styleButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
                 const styleName = button.dataset.style;
                 const prompt = prompts[styleName];
                 if (prompt) {
@@ -161,6 +203,7 @@
         });
 
         randomButton.addEventListener('click', async () => {
+            styleButtons.forEach(btn => btn.classList.remove('active'));
             await generateRandomPromptAndImage();
         });
 
@@ -306,3 +349,4 @@
     </script>
 </body>
 </html>
+
