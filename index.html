@@ -264,7 +264,11 @@
             }
 
             loadingOverlay.classList.remove('hidden');
-            
+            // Scroll to the canvas on mobile so the user can see the generation
+            if (window.innerWidth < 768) {
+                document.getElementById('imageCanvas').scrollIntoView({ behavior: 'smooth' });
+            }
+
             try {
                 const response = await fetch('/api/generate-prompt');
                 if (!response.ok) {
